@@ -1,0 +1,84 @@
+#重新拷贝生成新的虚机
+- name: "Clone new vm from {{ kvm_clone_from.acm_vm_name }}"
+  delegate_to: kvm_server
+  shell: |
+    virt-clone --original={{ kvm_clone_from.acm_vm_name }} --name={{ inventory_hostname }} --file=/var/lib/libvirt/images/{{ inventory_hostname }}.qcow2 --auto-clone
+  when: "'_app' in inventory_hostname or 
+         '_cs'  in inventory_hostname or 
+         '_mc'  in inventory_hostname"
+
+- name: "Clone new vm from {{ kvm_clone_from.db_vm_name }}"
+  delegate_to: kvm_server
+  shell: |
+    virt-clone --original={{ kvm_clone_from.db_vm_name }} --name={{ inventory_hostname }} --file=/var/lib/libvirt/images/{{ inventory_hostname }}.qcow2 --auto-clone
+  when: "'_db'  in inventory_hostname"
+
+
+- name: "Add vdb qcow2 disk"
+  delegate_to: kvm_server
+  shell: |
+    /usr/bin/qemu-img create -f qcow2 "/var/lib/libvirt/images/{{ inventory_hostname }}_vdb.qcow2" {{ vdb }}G && \
+    sleep 5 && \
+    /usr/bin/virsh attach-disk "{{ inventory_hostname }}" --targetbus ide --source "/var/lib/libvirt/images/{{ inventory_hostname }}_vdb.qcow2" --target vdb --persistent
+
+- name: "Add vdc qcow2 disk"
+  delegate_to: kvm_server
+  shell: |
+    /usr/bin/qemu-img create -f qcow2 "/var/lib/libvirt/images/{{ inventory_hostname }}_vdc.qcow2" {{ vdc }}G && \
+    sleep 5 && \
+    /usr/bin/virsh attach-disk "{{ inventory_hostname }}" --targetbus ide --source "/var/lib/libvirt/images/{{ inventory_hostname }}_vdc.qcow2" --target vdc --persistent
+
+- name: "Add mc vdd qcow2 disk"
+  delegate_to: kvm_server
+  shell: |
+    /usr/bin/qemu-img create -f qcow2 "/var/lib/libvirt/images/{{ inventory_hostname }}_vdd.qcow2" {{ vdd }}G && \
+    sleep 5 && \
+    /usr/bin/virsh attach-disk "{{ inventory_hostname }}" --targetbus ide --source "/var/lib/libvirt/images/{{ inventory_hostname }}_vdd.qcow2" --target vdd --persistent
+  when: "'_mc'  in inventory_hostname"
+
+- name: "Add db vdd qcow2 disk"
+  delegate_to: kvm_server
+  shell: |
+    /usr/bin/qemu-img create -f qcow2 "/var/lib/libvirt/images/{{ inventory_hostname }}_vdd.qcow2" {{ vdd }}G && \
+    sleep 5 && \
+    /usr/bin/virsh attach-disk "{{ inventory_hostname }}" --targetbus ide --source "/var/lib/libvirt/images/{{ inventory_hostname }}_vdd.qcow2" --target vdd --persistent
+  when: "'_db'  in inventory_hostname"
+
+- name: Set /etc/libvirt/qemu/{{ inventory_hostname }}.xml
+  delegate_to: kvm_server
+  lineinfile:
+    path: /etc/libvirt/qemu/{{ inventory_hostname }}.xml
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: '^<memory unit',            line: '  <memory unit='KiB'>{{ vmemory }}</memory>' }
+    - { regexp: '^<currentMemory unit',     line: '  <currentMemory unit='KiB'>{{ vmemory }}</currentMemory>' }
+    - { regexp: '^<vcpu placement',         line: '  <vcpu placement='static'>{{ vcpu }}</vcpu>' }
+
+
+- name: Add vdb.xml
+  delegate_to: kvm_server
+  lineinfile:
+    path: /tmp/{{ inventory_hostname }}_vdb.xml
+    line: "{{ item.line }}"
+    create: yes
+  loop:
+    -{ line: "<disk type='volume' device='disk'>" }
+    -{ line: "  <driver name='qemu' type='qcow2'/>" }
+    -{ line: "  <source pool='default' volume='centos7_vdb.qcow2'/>" }
+    -{ line: "  <target dev='vdb' bus='virtio'/>" }
+    -{ line: "</disk>" }
+
+
+- name: virsh define /etc/libvirt/qemu/{{ inventory_hostname }}.xml
+  delegate_to: kvm_server
+  shell: |
+    /usr/bin/virsh define /etc/libvirt/qemu/{{ inventory_hostname }}.xml
+
+# - name: "Add sdb qcow2 disk"
+#   delegate_to: kvm_server
+#   shell: |
+#     /usr/bin/qemu-img create -f qcow2 "/var/lib/libvirt/images/{{ inventory_hostname }}_sdb.qcow2" 5G && \
+#     sleep 5 && \
+#     /usr/bin/virsh attach-disk "{{ inventory_hostname }}" --targetbus ide --source "/var/lib/libvirt/images/{{ inventory_hostname }}_sdb.qcow2" --target hdc --persistent
+#   when: "'_db'  in inventory_hostname"

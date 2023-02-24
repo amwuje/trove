@@ -1,0 +1,10 @@
+TYPE=Ethernet
+PROXY_METHOD=none
+BROWSER_ONLY=no
+BOOTPROTO=static
+DEFROUTE=yes
+IPV6INIT=yes
+IPV6_AUTOCONF=no
+IPV6ADDR={{ ansible_host }}
+DEVICE={{ eth0_alias }}
+ONBOOT=yes

@@ -1,0 +1,9 @@
+---
+- hosts:
+    - mc_redhat
+    - db_redhat
+    - app_redhat
+    - cs_redhat
+  gather_facts: no
+  roles:
+    - { role: extend_sdb, os_type: redhat }

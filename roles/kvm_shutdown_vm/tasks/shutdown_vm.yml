@@ -1,0 +1,10 @@
+#停止并清理vm
+- name: "shutdown old vm"
+  delegate_to: kvm_server
+  shell: |
+    virsh shutdown "{{ inventory_hostname }}"
+  register: result
+  until: "'domain is not running' in result.stderr or 'no domain with matching name' in result.stderr"
+  retries: 15
+  delay: 10
+  ignore_errors: True

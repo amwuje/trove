@@ -1,0 +1,34 @@
+- name: "upload volume extend shell file"
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  with_items:
+    - { src : "user_data_template_volume_redhat.sh",       dest: "/opt/user_data_template_volume.sh",  mode: '0755' }
+    - { src : "initdev.expect",                     dest: "/var/run/initdev.expect",            mode: '0755' }
+
+- name: "create public volume"
+  shell: |
+    /bin/sh /opt/user_data_template_volume.sh "{{ item.dev_name }}"   "{{ item.volume_owner }}" "{{ item.volume_path }}" "{{ item.omc_host_type }}"
+  with_items:
+    - { dev_name: '/dev/vdb', volume_owner: 'root:root', volume_path: '/vn7ms', omc_host_type: 'dd'}
+    - { dev_name: '/dev/vdc', volume_owner: 'root:root', volume_path: '/backup', omc_host_type: 'dd'}
+
+- name: "create mc volume"
+  shell: |
+    /bin/sh /opt/user_data_template_volume.sh "{{ item.dev_name }}"   "{{ item.volume_owner }}" "{{ item.volume_path }}" "{{ item.omc_host_type }}"
+  with_items:
+    - { dev_name: '/dev/vdd', volume_owner: 'root:root', volume_path: '/extend', omc_host_type: 'dd'}
+  when: inventory_hostname in groups['mc_' + os_type]
+
+- name: "create db vdb volume"
+  shell: |
+    /bin/sh /opt/user_data_template_volume.sh "{{ item.dev_name }}"   "{{ item.volume_owner }}" "{{ item.volume_path }}" "{{ item.omc_host_type }}"
+  with_items:
+    - { dev_name: '/dev/vdd', volume_owner: 'postgres:postgres', volume_path: '/var/lib/postgresql/data', omc_host_type: 'DB'}
+  when: inventory_hostname in groups['db_' + os_type]
+
+- name: "Remove temporary volume extend shell file"
+  file:
+    path: /opt/user_data_template_volume.sh
+    state: absent

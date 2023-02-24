@@ -1,0 +1,5 @@
+---
+- include_tasks: clone_vm.yml
+- include_tasks: startup_new_vm.yml
+# - include_tasks: setup_yum.yml
+# - include_tasks: install_dep_software.yml

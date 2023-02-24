@@ -1,0 +1,72 @@
+#启动新虚机并初始化配置IP
+- block:
+  - name: "start vm {{ inventory_hostname }}"
+    delegate_to: kvm_server
+    shell: |
+      virsh start {{ inventory_hostname }}
+
+  - name: "Remove {{ kvm_clone_from.default_vm_ip }} line in host key file"
+    delegate_to: '127.0.0.1'
+    lineinfile:
+      path: /root/.ssh/known_hosts
+      state: absent
+      regexp: "^{{ kvm_clone_from.default_vm_ip }}.*"
+
+  - name: "Wait for vm init up"
+    delegate_to: "{{ kvm_clone_from.default_vm_ip }}"
+    wait_for_connection:
+      timeout: 300
+      delay: 10
+
+  - name: "Setup host {{ eth0_alias }}"
+    delegate_to: "{{ kvm_clone_from.default_vm_ip }}"
+    template:
+      src: ifcfg-eth0.j2
+      dest: '/etc/sysconfig/network-scripts/ifcfg-{{ eth0_alias }}'
+      mode: '0644'
+      force: yes
+
+  - name: "Setup host {{ eth1_alias }}"
+    delegate_to: "{{ kvm_clone_from.default_vm_ip }}"
+    template:
+      src: ifcfg-eth1.j2
+      dest: '/etc/sysconfig/network-scripts/ifcfg-{{ eth1_alias }}'
+      mode: '0644'
+      force: yes
+    when: (ansible_host_eth1_v6 is defined) and (ansible_host_eth1_v4 is defined)
+
+
+  - name: "Modify  {{ ansible_host }} host hostname "
+    delegate_to: "{{ kvm_clone_from.default_vm_ip }}"
+    shell: |
+      /usr/bin/hostnamectl set-hostname {{ hostname }}  --static && systemctl restart systemd-hostnamed
+
+  - name: "Remove {{ kvm_clone_from.default_vm_ip }} {{ eth1_alias }} file"
+    delegate_to: "{{ kvm_clone_from.default_vm_ip }}"
+    shell: |
+      /usr/bin/rm -rf /etc/sysconfig/network-scripts/ifcfg-{{ eth1_alias }} 
+    when: (inventory_hostname in groups['mc_' + os_type]) or (inventory_hostname in groups['db_' + os_type])
+
+  - name: "Reboot vm"
+    delegate_to: "{{ kvm_clone_from.default_vm_ip }}"
+    command: /sbin/shutdown -r +0
+    async: 0
+    poll: 0
+    ignore_errors: true
+
+  - name: "Remove {{ ansible_host }} line in host key file"
+    delegate_to: '127.0.0.1'
+    lineinfile:
+      path: /root/.ssh/known_hosts
+      state: absent
+      regexp: '.*{{ ansible_host | lower }}.*'
+
+  - name: 'sleep for {{ default_sleep_timeout }} seconds and continue with play'
+    delegate_to: kvm_server
+    wait_for:
+      timeout: '{{ default_sleep_timeout }}'
+
+  - name: "Wait for vm init up"
+    wait_for_connection:
+      timeout: 300
+      delay: 10

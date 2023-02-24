@@ -1,0 +1,17 @@
+- name: "upload volume extend shell file"
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  with_items:
+    - { src : "user_data_template_volume.sh",       dest: "/opt/user_data_template_volume.sh",  mode: '0755' }
+    - { src : "initdev.expect",                     dest: "/var/run/initdev.expect",            mode: '0755' }
+
+- name: "create db sdb volume"
+  shell: |
+    /bin/sh /opt/user_data_template_volume.sh "/dev/sdb"   "hummingbird:dba" "/var/lib/HBdb/data" "DB"
+
+- name: "Remove temporary volume extend shell file"
+  file:
+    path: /opt/user_data_template_volume.sh
+    state: absent

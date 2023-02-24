@@ -1,0 +1,7 @@
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+{% for group_name in ['mc_{{ os_type }}', 'db_{{ os_type }}', 'app_{{ os_type }}', 'cs_{{ os_type }}'] %}
+{% for host in groups[ group_name ] %}
+{{ hostvars[ host ]['ansible_host'] }}    {{ hostvars[ host ][ 'inventory_hostname' ] }}
+{% endfor %}
+{% endfor %}

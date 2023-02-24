@@ -1,0 +1,29 @@
+---
+- hosts:
+    - mc_redhat
+    - db_redhat
+    - app_redhat
+    - cs_redhat
+  gather_facts: no
+  roles:
+    - { role: kvm_shutdown_vm, os_type: redhat }
+
+- hosts:
+    - mc_redhat
+    - db_redhat
+    - app_redhat
+    - cs_redhat
+  gather_facts: no
+  serial: 1
+  roles:
+    - { role: kvm_clone_vm, os_type: redhat }
+
+- hosts:
+    - mc_redhat
+    - db_redhat
+    - app_redhat
+    - cs_redhat
+  gather_facts: no
+  serial: 1
+  roles:
+    - { role: vn7ms_dev_init, os_type: redhat }

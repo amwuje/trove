@@ -1,0 +1,6 @@
+---
+- hosts:
+    - db_oel
+  gather_facts: no
+  roles:
+    - { role: extend_sdb, os_type: oel }

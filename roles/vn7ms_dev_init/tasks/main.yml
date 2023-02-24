@@ -1,0 +1,6 @@
+---
+- include_tasks: setup_ssh_key.yml
+  when: os_type != "redhat"
+- include_tasks: setup_ssh_key_redhat.yml
+  when: os_type == "redhat"
+- include_tasks: setup_vn7ms_env.yml

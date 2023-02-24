@@ -1,0 +1,35 @@
+#安装ssh key
+- name: "Ensure directory exists"
+  file:
+    path: '{{ item }}'
+    state: directory
+  with_items:
+    - /etc/auth
+
+- name: "upload ssh key file"
+  copy:
+    src: redhat/ssh_key_pem
+    dest: /etc/auth/ssh_key_pem
+    mode: '0600'
+
+- name: "init /usr/sbin/mc{i} script to app/cs vm"
+  delegate_to: '{{ item }}'
+  template:
+    src: quick_login.sh.j2
+    dest: '/usr/sbin/mc{{ node_id }}'
+    mode: '0755'
+    force: yes
+  when: inventory_hostname in groups['mc_' + os_type]
+  with_items: 
+    - "{{ groups['app_' + os_type] }} + {{ groups['cs_' + os_type] }}"
+
+- name: "init /usr/sbin/db{i} script to app/cs vm"
+  delegate_to: '{{ item }}'
+  template:
+    src: quick_login.sh.j2
+    dest: '/usr/sbin/db{{ node_id }}'
+    mode: '0755'
+    force: yes
+  when: inventory_hostname in groups['db_' + os_type]
+  with_items: 
+    - "{{ groups['app_' + os_type] }} + {{ groups['cs_' + os_type] }}"

@@ -1,0 +1,7 @@
+#自动初始化vn7ms虚机默认环境
+- name: "setup vn7ms_env.sh"
+  template:
+    src: vn7ms_env_{{ os_type }}.sh.j2
+    dest: '/etc/vn7ms_env.sh'
+    mode: '0644'
+    force: yes

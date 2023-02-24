@@ -1,0 +1,6 @@
+#清理vm
+- name: "undefine old vm"
+  shell: |
+    virsh undefine --managed-save  --remove-all-storage  --snapshots-metadata "{{ inventory_hostname }}"
+  delegate_to: kvm_server
+  ignore_errors: True

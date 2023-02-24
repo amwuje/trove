@@ -1,0 +1,5 @@
+---
+- include_tasks: create_db_vda_volume.yml
+  when: os_type != "redhat"
+- include_tasks: create_db_vda_volume_redhat.yml
+  when: os_type == "redhat"

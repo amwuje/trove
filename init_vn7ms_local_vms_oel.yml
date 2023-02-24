@@ -1,0 +1,32 @@
+---
+- hosts:
+    - mc_oel
+    - db_oel
+    - app_oel
+    - cs_oel
+    # - openEulerImage
+  gather_facts: no
+  roles:
+    - { role: kvm_shutdown_vm, os_type: oel }
+
+- hosts:
+    - mc_oel
+    - db_oel
+    - app_oel
+    - cs_oel
+    # - openEulerImage
+  gather_facts: no
+  serial: 1
+  roles:
+    - { role: kvm_clone_vm, os_type: oel }
+
+- hosts:
+    - mc_oel
+    - db_oel
+    - app_oel
+    - cs_oel
+    # - openEulerImage
+  gather_facts: no
+  serial: 1
+  roles:
+    - { role: vn7ms_dev_init, os_type: oel }

@@ -1,0 +1,47 @@
+#!/bin/sh
+
+export NODE_ID="{{ node_id }}"
+export LOCAL_BIND_ADDR="{{ ansible_host }}"
+{% if ansible_host_eth1_v4 is defined %}
+export LOCAL_BIND_WAN_ADDR_V4="{{ ansible_host_eth1_v4 }}"
+{% endif %}
+{% if ansible_host_eth1_v6 is defined %}
+export LOCAL_BIND_WAN_ADDR_V6="{{ ansible_host_eth1_v6 }}"
+{% endif %}
+export DB_DATABASE="{{ vn7ms_env.DB_DATABASE }}"
+export DB_USERNAME="{{ vn7ms_env.DB_USERNAME }}"
+export DB_PASSWORD="{{ vn7ms_env.DB_PASSWORD }}"
+export IPv6_ENABLED="1"
+{% for db_host in groups['db_' + os_type] %}
+export LAN_DB_SERVER_{{ loop.index }}_IP="{{ hostvars[ db_host ]['ansible_host'] }}"
+{% endfor %}
+{% for mc_host in groups['mc_' + os_type] %}
+export LAN_MC_SERVER_{{ loop.index }}_IP="{{ hostvars[ mc_host ]['ansible_host'] }}"
+{% endfor %}
+export WAN_CS_VIP_V4="192.168.9.115"
+export WAN_CS_VIP_V6="3333:6666:8888:600:11:10:229:115"
+export LAN_DB_VIP_V4="3333:6666:8888:600:11:10:228:F10"
+export LAN_MC_VIP_V4="3333:6666:8888:600:11:10:228:F11"
+export LAN_APP_VIP_V6="3333:6666:8888:600:11:10:228:F12"
+export WAN_APP_VIP_V4_CIDR="192.168.9.114/24"
+export WAN_APP_VIP_V6_CIDR="3333:6666:8888:600:11:10:229:114/64"
+export WAN_APP_VIP_V4="192.168.9.114"
+export WAN_APP_VIP_V6="3333:6666:8888:600:11:10:229:114"
+export WAN_CS_VIP_V4_CIDR="192.168.9.115/24"
+export WAN_CS_VIP_V6_CIDR="3333:6666:8888:600:11:10:229:115/64"
+export LAN_DB_VIP_V4_CIDR="3333:6666:8888:600:11:10:228:F10/64"
+export LAN_MC_VIP_V4_CIDR="3333:6666:8888:600:11:10:228:F11/64"
+export LAN_APP_VIP_V6_CIDR="3333:6666:8888:600:11:10:228:F12/64"
+export GFS_VOLUMN="gv0"
+{% for group_name in group_names %}
+	{% for host_name in groups[ group_name ] %}
+		{% if host_name == inventory_hostname %}
+
+export OMC_HOST_NAME="dev-vN7MS2{{ group_name }}_in_{{ loop.index }}"
+export OMC_HOST_TYPE="{{ group_name.split('_')[0] | upper }}"
+		{% endif %}
+	{% endfor %}
+{% endfor %}
+
+export CONSUL_DC_ID="n7ms-dc-1"
+export V_RT_ID_PREFIX="1"
